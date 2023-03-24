@@ -1,0 +1,10 @@
+matrix_size = (25, 25)
+rendering = True
+printing = False
+base_temperature = 15
+zoom = 15
+debug = False
+show_FPS = True
+accuracy = 0.1
+random_generation = True
+frequency_generation = 7.5
