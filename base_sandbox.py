@@ -13,24 +13,28 @@ subs = {
         'loose': True,
         'liquid_like': True,
         'diffusion': False,
+        'gas': False,
     },
     "bulk": {
         "physics": True,
         'loose': True,
         'liquid_like': False,
         'diffusion': False,
+        'gas': False,
     },
     "solid": {
         "physics": False,
         'loose': False,
         'liquid_like': False,
         'diffusion': False,
+        'gas': False,
     },
     "gas": {
         "physics": True,
         'loose': True,
         'liquid_like': False,
         'diffusion': True,
+        'gas': True,
     },
 }
 
@@ -250,6 +254,23 @@ def liquid_substance(density_orig, density_left, density_right, left, right):
     return to_add
 
 
+def gas_substance(density_orig, density_up, density_up_left, density_up_right, density_left, density_right, up, up_left,
+                  up_right, left, right):
+    to_add = []
+
+    if up and density_up > density_orig:
+        to_add.append(up)
+    if up_left and density_up_left > density_orig:
+        to_add.append(up_left)
+    if up_right and density_up_right > density_orig:
+        to_add.append(up_right)
+    if right and density_right > density_orig:
+        to_add.append(right)
+    if left and density_left > density_orig:
+        to_add.append(left)
+    return to_add
+
+
 class Matrix:
     def __init__(self, size):
         if isinstance(size, int):
@@ -298,6 +319,7 @@ class Matrix:
                         is_loose = w.info['subs']['loose']
                         is_liquid_like = w.info['subs']['liquid_like']
                         is_diffusion = w.info['subs']['diffusion']
+                        is_gas = w.info['subs']['gas']
 
                         if down and not cop_matrix[down[0]][down[1]].info['density'] < w.info['density']:
                             if is_diffusion:
@@ -352,6 +374,38 @@ class Matrix:
 
                                     moves.extend(liquid_substance(w.info['density'], left_density, right_density,
                                                                   left, right))
+                            if is_gas:
+                                up = do_pos(self.size[1], self.size[0], h_id, w_id - 1)
+                                up_left = do_pos(self.size[1], self.size[0], h_id - 1, w_id - 1)
+                                up_right = do_pos(self.size[1], self.size[0], h_id + 1, w_id - 1)
+                                left = do_pos(self.size[1], self.size[0], h_id - 1, w_id)
+                                right = do_pos(self.size[1], self.size[0], h_id + 1, w_id)
+
+                                up_left_density = False
+                                up_right_density = False
+                                up_density = False
+                                left_density = False
+                                right_density = False
+
+                                if up:
+                                    up_density = cop_matrix[up[0]][up[1]].info['density']
+                                if up_left:
+                                    up_left_density = cop_matrix[up_left[0]][up_left[1]].info['density']
+                                if up_right:
+                                    up_right_density = cop_matrix[up_right[0]][up_right[1]].info['density']
+                                if left:
+                                    left_density = cop_matrix[left[0]][left[1]].info['density']
+                                if right:
+                                    right_density = cop_matrix[right[0]][right[1]].info['density']
+
+                                to_move = gas_substance(w.info['density'], up_density, up_left_density,
+                                                        up_right_density, left_density, right_density, up, up_left,
+                                                        up_right, left, right)
+
+                                if to_move:
+                                    moves.extend(to_move)
+                                else:
+                                    moves.append(down)
                         else:
                             moves.append(down)
 
